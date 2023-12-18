@@ -1,0 +1,61 @@
+version: '3'
+services:
+
+  # SA Users
+  sa_users_app:
+    build:
+      context: ../sa-users
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www
+    volumes:
+      - ../sa-users/:/var/www:delegated
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - sa_users-network
+  sa_users_webserver:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ../sa-users/:/var/www:delegated
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - sa_users-network
+  sa_users_db:
+    image: mysql:8.2.0
+    volumes:
+      - ./sa_users_mysql:/var/lib/mysql
+    restart: unless-stopped
+    tty: true
+    environment:
+      MYSQL_DATABASE: sa_users
+      MYSQL_USER: localking
+      MYSQL_PASSWORD: localking
+      MYSQL_ROOT_PASSWORD: FnbfWPTX
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - sa_users-network
+
+
+
+# Docker Networks
+networks:
+  sa_users-network:
+    driver: bridge
