@@ -4,7 +4,7 @@ services:
   # SA Users
   sa_users_app:
     build:
-      context: ../sa-users
+      context: ../sa-users1
       dockerfile: Dockerfile
     restart: unless-stopped
     tty: true
