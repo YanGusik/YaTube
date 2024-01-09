@@ -1,3 +1,6 @@
 
 .idea
+docker/sa_*
 docker/sa_users_mysql
+docker/sa_videos_mysql
+docker/rabbitmq

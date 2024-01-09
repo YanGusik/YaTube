@@ -20,6 +20,7 @@ class LoginController extends Controller
             'role' => $user->getRole()->name,
             'permissions' => $roleService->getRole($user->getRole())->getPermissions()
         ];
+
         return array_merge($user->toArray(),$data);
     }
 

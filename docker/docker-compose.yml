@@ -1,7 +1,85 @@
 version: '3'
 services:
 
-  # SA Users
+  # Nginx Balancer
+  api-gateway:
+    build:
+      context: ../api-gateway
+    volumes:
+      - ../api-gateway/oauth2.js:/etc/nginx/conf.d/oauth2.js
+      - ../api-gateway/nginx.conf:/etc/nginx/nginx.conf
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - sa_api-gateway
+    ports:
+      - "8001:80"
+
+  rabbitmq:
+    image: rabbitmq:3.7.13-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      #- RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=${RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS} for prod
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+    ports:
+      - 15672:15672 #debug
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - sa_videos-network
+
+  # SA VIDEOS (GO Fiber)
+  sa_videos_app:
+    build:
+      context: ../sa-videos
+      dockerfile: Dockerfile
+    expose:
+      - 3000
+    working_dir: /usr/src/app
+    volumes:
+      - ../sa-videos/:/usr/src/app
+    command: CompileDaemon --build="go build cmd/main.go" -command="./main -b 0.0.0.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - sa_videos-network
+      - sa_api-gateway
+  sa_videos_db:
+    image: mysql:8.2.0
+    volumes:
+      - ./sa_videos_mysql:/var/lib/mysql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "9036:3306" #debug
+    environment:
+      MYSQL_DATABASE: ${VIDEOS_DATABASE}
+      MYSQL_USER: ${VIDEOS_USER}
+      MYSQL_PASSWORD: ${VIDEOS_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${VIDEOS_ROOT_PASSWORD}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - sa_videos-network
+
+
+      # SA Users
+
+  # SA USERS (PHP Laravel)
   sa_users_app:
     build:
       context: ../sa-users
@@ -22,8 +100,10 @@ services:
     image: nginx:alpine
     restart: unless-stopped
     tty: true
-    ports:
-      - "8080:80"
+    expose:
+      - 80
+    #    ports:
+    #      - "8080:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ../sa-users/:/var/www:delegated
@@ -34,6 +114,7 @@ services:
         max-file: "10"
     networks:
       - sa_users-network
+      - sa_api-gateway
   sa_users_db:
     image: mysql:8.2.0
     volumes:
@@ -41,10 +122,10 @@ services:
     restart: unless-stopped
     tty: true
     environment:
-      MYSQL_DATABASE: sa_users
-      MYSQL_USER: localking
-      MYSQL_PASSWORD: localking
-      MYSQL_ROOT_PASSWORD: FnbfWPTX
+      MYSQL_DATABASE: ${USERS_DATABASE}
+      MYSQL_USER: ${USERS_USER}
+      MYSQL_PASSWORD: ${USERS_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${VIDEOS_ROOT_PASSWORD}
     logging:
       driver: "json-file"
       options:
@@ -53,9 +134,11 @@ services:
     networks:
       - sa_users-network
 
-
-
 # Docker Networks
 networks:
+  sa_api-gateway:
+    driver: bridge
   sa_users-network:
+    driver: bridge
+  sa_videos-network:
     driver: bridge
