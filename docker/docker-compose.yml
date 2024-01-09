@@ -37,24 +37,25 @@ services:
       - sa_videos-network
 
   # SA VIDEOS (GO Fiber)
-  sa_videos_app:
-    build:
-      context: ../sa-videos
-      dockerfile: Dockerfile
-    expose:
-      - 3000
-    working_dir: /usr/src/app
-    volumes:
-      - ../sa-videos/:/usr/src/app
-    command: CompileDaemon --build="go build cmd/main.go" -command="./main -b 0.0.0.0"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "10"
-    networks:
-      - sa_videos-network
-      - sa_api-gateway
+# Observed
+#  sa_videos_go:
+#    build:
+#      context: ../sa-videos_go
+#      dockerfile: Dockerfile
+#    expose:
+#      - 3000
+#    working_dir: /usr/src/app
+#    volumes:
+#      - ../sa-videos_go/:/usr/src/app
+#    command: CompileDaemon --build="go build cmd/main.go" -command="./main -b 0.0.0.0"
+#    logging:
+#      driver: "json-file"
+#      options:
+#        max-size: "50m"
+#        max-file: "10"
+#    networks:
+#      - sa_videos-network
+#      - sa_api-gateway
   sa_videos_db:
     image: mysql:8.2.0
     volumes:
