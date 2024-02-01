@@ -1,0 +1,3 @@
+[submodule "Videos.Backend"]
+	path = Videos.Backend
+	url = https://github.com/YanGusik/Videos.Backend.git
